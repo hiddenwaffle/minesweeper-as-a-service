@@ -1,4 +1,4 @@
-# berrysweeper
+# minesweeper-as-a-service
 
 Development Mode:
 ```

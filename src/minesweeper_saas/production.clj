@@ -1,6 +1,6 @@
-(ns berrysweeper.production
+(ns minesweeper-saas.production
   (:require [ring.adapter.jetty :refer [run-jetty]]
-            [berrysweeper.handler :as handler])
+            [minesweeper-saas.handler :as handler])
   (:gen-class))
 
 (defn -main [& args]

@@ -1,9 +1,9 @@
-(ns berrysweeper.handler
+(ns minesweeper-saas.handler
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
-            [berrysweeper.game :as game]))
+            [minesweeper-saas.game :as game]))
 
 (defn reset-handler [request]
   (let [body (game/reset)]

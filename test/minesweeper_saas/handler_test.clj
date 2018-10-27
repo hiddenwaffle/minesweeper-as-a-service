@@ -1,7 +1,7 @@
-(ns berrysweeper.handler-test
+(ns minesweeper-saas.handler-test
   (:require [clojure.test :refer :all]
             [ring.mock.request :as mock]
-            [berrysweeper.handler :refer :all]))
+            [minesweeper-saas.handler :refer :all]))
 
 (deftest test-app
   (testing "main route"
