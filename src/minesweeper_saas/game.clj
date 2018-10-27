@@ -2,7 +2,7 @@
 
 (def board-height 8)
 (def board-width 8)
-(def berries 10)
+(def starting-mines-count 10)
 
 (defn reset []
   {:reset "as-json"})
