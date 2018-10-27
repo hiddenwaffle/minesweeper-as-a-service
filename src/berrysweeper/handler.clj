@@ -2,16 +2,17 @@
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
-            [ring.middleware.json :refer [wrap-json-body wrap-json-response]]))
+            [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
+            [berrysweeper.game :as game]))
 
 (defn reset-handler [request]
-  (let [body (berrysweeper.game/reset)]
+  (let [body (game/reset)]
     {:status 200
      :headers {"Content-Type" "application/json"}
      :body body}))
 
 (defn pick-handler [request]
-  (let [body (berrysweeper.game/pick (:body request))]
+  (let [body (game/pick (:body request))]
     {:status 200
      :headers {"Content-Type" "application/json"}
      :body body}))
