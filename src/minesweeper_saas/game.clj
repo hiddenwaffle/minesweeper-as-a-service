@@ -38,19 +38,32 @@
 
 (defn clear [index state] state)
 
-(defn flag [index
-            {:keys [tiles] :as state}]
-  (println state)
+(defn add-tag [tile tag]
+  (conj tile tag))
+
+(defn remove-tag [tile tag]
+  (disj tile tag))
+
+(defn flag
+  "Mark a hidden tile as flagged"
+  [index
+   {:keys [tiles] :as state}]
   (let [tile (set (tiles index))]
-    (println tile)
-    (if (contains? tile "hidden")
+    (if (contains? tile "flag")
       (let [updated-tile (-> tile
-                             (disj "hidden")
-                             (conj "flag"))]
+                             (remove-tag "flag")
+                             (add-tag "hidden"))]
         (assoc state
                :tiles
                (assoc tiles index updated-tile)))
-      state)))
+      (if (contains? tile "hidden")
+        (let [updated-tile (-> tile
+                               (remove-tag "hidden")
+                               (add-tag "flag"))]
+          (assoc state
+                 :tiles
+                 (assoc tiles index updated-tile)))
+        state))))
 
 (defn apply-pick
   "Determine and carry out the pick of a tile"
