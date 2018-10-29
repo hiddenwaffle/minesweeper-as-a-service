@@ -39,31 +39,48 @@
 (defn clear [index state] state)
 
 (defn add-tag [tile tag]
-  (conj tile tag))
+  (conj (set tile) tag))
 
 (defn remove-tag [tile tag]
-  (disj tile tag))
+  (disj (set tile) tag))
+
+;; (defn flag
+;;   "Mark a hidden tile as flagged"
+;;   [index
+;;    {:keys [tiles] :as state}]
+;;   (let [tile (set (tiles index))]
+;;     (if (contains? tile "flag")
+;;       (let [updated-tile (-> tile
+;;                              (remove-tag "flag")
+;;                              (add-tag "hidden"))]
+;;         (assoc state
+;;                :tiles
+;;                (assoc tiles index updated-tile)))
+;;       (if (contains? tile "hidden")
+;;         (let [updated-tile (-> tile
+;;                                (remove-tag "hidden")
+;;                                (add-tag "flag"))]
+;;           (assoc state
+;;                  :tiles
+;;                  (assoc tiles index updated-tile)))
+;;         state))))
 
 (defn flag
-  "Mark a hidden tile as flagged"
-  [index
-   {:keys [tiles] :as state}]
-  (let [tile (set (tiles index))]
-    (if (contains? tile "flag")
-      (let [updated-tile (-> tile
-                             (remove-tag "flag")
-                             (add-tag "hidden"))]
-        (assoc state
-               :tiles
-               (assoc tiles index updated-tile)))
-      (if (contains? tile "hidden")
-        (let [updated-tile (-> tile
-                               (remove-tag "hidden")
-                               (add-tag "flag"))]
-          (assoc state
-                 :tiles
-                 (assoc tiles index updated-tile)))
-        state))))
+  "Toggle the flag of a tile. Tile must be a hidden tile."
+  [index state]
+  (let [tile (set ((state :tiles) index))]
+    (cond
+      (contains? tile "flag") (update-in state
+                                         [:tiles index]
+                                         #(-> %
+                                              (remove-tag "flag")
+                                              (add-tag "hidden")))
+      (contains? tile "hidden") (update-in state
+                                           [:tiles index]
+                                           #(-> %
+                                                (remove-tag "hidden")
+                                                (add-tag "flag")))
+      :else state)))
 
 (defn apply-pick
   "Determine and carry out the pick of a tile"
