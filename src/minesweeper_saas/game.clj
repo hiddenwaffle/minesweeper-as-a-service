@@ -1,7 +1,6 @@
 (ns minesweeper-saas.game)
 
-(def empty-tile "" "")
-(def mine-tile  "" "mine")
+(def empty-tile "" #{})
 
 (defn random-indexes
   "Generate some random numbers, non-repeating, in a range from 0 to n"
@@ -15,7 +14,7 @@
          indexes (random-indexes mine-count (count tiles))
          index   (first indexes)]
     (if index
-      (recur (assoc tiles index mine-tile)
+      (recur (update tiles index #(conj % :mine))
              (rest indexes)
              (first indexes))
       tiles)))
