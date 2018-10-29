@@ -36,47 +36,40 @@
      :height height
      :width  width}))
 
-(defn clear [index state] state)
-
 (defn add-tag [tile tag]
   (conj (set tile) tag))
 
 (defn remove-tag [tile tag]
   (disj (set tile) tag))
 
-;; (defn flag
-;;   "Mark a hidden tile as flagged"
-;;   [index
-;;    {:keys [tiles] :as state}]
-;;   (let [tile (set (tiles index))]
-;;     (if (contains? tile "flag")
-;;       (let [updated-tile (-> tile
-;;                              (remove-tag "flag")
-;;                              (add-tag "hidden"))]
-;;         (assoc state
-;;                :tiles
-;;                (assoc tiles index updated-tile)))
-;;       (if (contains? tile "hidden")
-;;         (let [updated-tile (-> tile
-;;                                (remove-tag "hidden")
-;;                                (add-tag "flag"))]
-;;           (assoc state
-;;                  :tiles
-;;                  (assoc tiles index updated-tile)))
-;;         state))))
+(defn clear
+  "Attempt to either clear tile successfully, or hit a mine.
+  Tile must be a hidden tile"
+  [index state]
+  (let [path-to-tile [:tiles index]
+        tile (set (get-in state path-to-tile))]
+    (cond
+      (contains? tile "mine") (do
+                                (println "HIT A MINE")
+                                state)
+      (contains? tile "hidden") (do
+                                  (println "DO RECURSIVE CLEAR")
+                                  state)
+      :else state)))
 
 (defn flag
   "Toggle the flag of a tile. Tile must be a hidden tile."
   [index state]
-  (let [tile (set ((state :tiles) index))]
+  (let [path-to-tile [:tiles index]
+        tile (set (get-in state path-to-tile))]
     (cond
       (contains? tile "flag") (update-in state
-                                         [:tiles index]
+                                         path-to-tile
                                          #(-> %
                                               (remove-tag "flag")
                                               (add-tag "hidden")))
       (contains? tile "hidden") (update-in state
-                                           [:tiles index]
+                                           path-to-tile
                                            #(-> %
                                                 (remove-tag "hidden")
                                                 (add-tag "flag")))
@@ -92,4 +85,6 @@
 
 (defn pick [{:keys [pick-grid-index] :as prev-state}
             type]
-  (apply-pick type pick-grid-index prev-state))
+  (apply-pick type
+              pick-grid-index
+              prev-state))
