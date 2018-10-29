@@ -1,24 +1,41 @@
 (ns minesweeper-saas.game)
 
-(def board-height 8)
+(def empty-tile "" "")
+(def mine-tile  "" "mine")
 
-(def board-width 8)
+(defn random-indexes
+  "Generate some random numbers, non-repeating, in a range from 0 to n"
+  [how-many n]
+  (take how-many (shuffle (range 0 n))))
 
-(defn cartesian [xs ys]
-  (#(for [x %1 y %2] [x y]) xs ys))
+(defn place-mines
+  "Place mines randomly around a tile vector"
+  [tiles mine-count]
+  (loop [tiles   tiles
+         indexes (random-indexes mine-count (count tiles))
+         index   (first indexes)]
+    (if index
+      (recur (assoc tiles index mine-tile)
+             (rest indexes)
+             (first indexes))
+      tiles)))
 
-(defn generate-mines []
-  (let [starting-mines-count 10
-        board-x-positions (range 0 board-width)
-        board-y-positions (range 0 board-height)]
-    (take starting-mines-count
-          (shuffle (cartesian board-x-positions
-                              board-y-positions)))))
+(defn generate-tiles
+  "Create a starting minefield for the given parameters"
+  [mine-count tile-count]
+  (let [empty-tiles (vec (repeat tile-count empty-tile))]
+    (-> empty-tiles
+        (place-mines mine-count))))
 
-(defn reset []
-  {:mines (generate-mines)
-   :board-height board-height
-   :board-width board-width})
+(defn reset
+  "Create a starting minefield with predefined parameters"
+  []
+  (let [mine-count 10
+        height     8
+        width      8]
+    {:tiles  (generate-tiles mine-count (* width height))
+     :height height
+     :width  width}))
 
 (defn pick [old-state]
   {:pick "as-json"})
