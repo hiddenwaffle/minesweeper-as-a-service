@@ -27,7 +27,7 @@
 
 (def app
   (-> app-routes
-      (wrap-cors :access-control-allow-origin [#"https://unremarkableSCM.github.io"
+      (wrap-cors :access-control-allow-origin [#"https://unremarkablescm.github.io"
                                                #"http://localhost:8000"]
                  :access-control-allow-methods [:get :post])
       (wrap-json-body {:keywords? true})
