@@ -1,6 +1,6 @@
 (ns minesweeper-saas.game)
 
-(def empty-tile "" #{})
+(def empty-tile "" #{:hidden})
 
 (defn random-indexes
   "Generate some random numbers, non-repeating, in a range from 0 to n"
