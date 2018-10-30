@@ -19,12 +19,18 @@
              (first indexes))
       tiles)))
 
+(defn assign-numbers
+  "Increment each tile's number by surrounding mines"
+  [tiles]
+  tiles)
+
 (defn generate-tiles
   "Create a starting minefield for the given parameters"
   [mine-count tile-count]
   (let [blank-tiles (vec (repeat tile-count blank-tile))]
     (-> blank-tiles
-        (place-mines mine-count))))
+        (place-mines mine-count)
+        assign-numbers)))
 
 (defn reset
   "Create a starting minefield with predefined parameters"
@@ -42,6 +48,14 @@
 (defn remove-tag [tile tag]
   (disj (set tile) tag))
 
+(defn game-over [state]
+  (println "do game over")
+  state)
+
+(defn clear-fill [index state]
+  (println "do clear-fill")
+  state)
+
 (defn clear
   "Attempt to either clear tile successfully, or hit a mine.
   Tile must be a hidden tile"
@@ -49,12 +63,8 @@
   (let [path-to-tile [:tiles index]
         tile (set (get-in state path-to-tile))]
     (cond
-      (contains? tile "mine") (do
-                                (println "HIT A MINE")
-                                state)
-      (contains? tile "hidden") (do
-                                  (println "DO RECURSIVE CLEAR")
-                                  state)
+      (contains? tile "mine") (game-over state)
+      (contains? tile "hidden") (clear-fill index state)
       :else state)))
 
 (defn flag
