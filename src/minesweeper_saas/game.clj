@@ -1,6 +1,36 @@
 (ns minesweeper-saas.game)
 
-(def blank-tile "" #{:hidden})
+(def blank-tile "" #{"hidden" 0})
+
+(defn increment-number [current]
+  (case current
+    0 1
+    1 2
+    2 3
+    3 4
+    4 5
+    5 6
+    6 7
+    7 8
+    "<error>"))
+
+(defn tile-number [tile]
+  (cond (contains? tile 0) 0
+        (contains? tile 1) 1
+        (contains? tile 2) 2
+        (contains? tile 3) 3
+        (contains? tile 4) 4
+        (contains? tile 5) 5
+        (contains? tile 6) 6
+        (contains? tile 7) 7
+        (contains? tile 8) 8
+        :else "<error>"))
+
+(defn add-tag [tile tag]
+  (conj (set tile) tag))
+
+(defn remove-tag [tile tag]
+  (disj (set tile) tag))
 
 (defn random-indexes
   "Generate some random numbers, non-repeating, in a range from 0 to n"
@@ -14,23 +44,88 @@
          indexes (random-indexes mine-count (count tiles))
          index   (first indexes)]
     (if index
-      (recur (update tiles index #(conj % :mine))
+      (recur (update tiles index #(conj % "mine"))
              (rest indexes)
              (first indexes))
       tiles)))
 
+(defn index->xy [index width]
+  (let [x (mod index width)
+        y (/ (- index x) width)]
+    {:x x, :y y}))
+
+(defn xy->index [x y width]
+  (+ (* y width) x))
+
+(defn relative-index
+  "Returns the index relative to the given index, offset by dx and dy,
+  or :out-of-bounds if the offset not within the range."
+  [index width range dx dy]
+  (let [{:keys [x y]} (index->xy index width)
+        dest-x (+ x dx)
+        dest-y (+ y dy)
+        dest-index (xy->index dest-x dest-y width)]
+    (if (and (>= x 0) (< x width) (>= dest-index 0) (< dest-index range))
+      dest-index
+      :out-of-bounds)))
+
+(defn increment-tile-number
+  [tile]
+  (let [current-number (tile-number tile)
+        new-number (increment-number current-number)]
+    (-> tile
+        (remove-tag current-number)
+        (add-tag new-number))))
+
+(defn update-relative-tile
+  "Applies f to the tile relative to the given position
+  or nil if out of bounds"
+  [tiles index width dx dy f]
+  (let [range (count tiles)
+        dest-index (relative-index index width range dx dy)]
+    (if (= dest-index :out-of-bounds)
+      tiles
+      (update tiles dest-index increment-tile-number))))
+
+(defn increment-tile [tile]
+  (println "TILE:" tile))
+
+(defn increment-surrounding
+  "Takes an index and increments its surrounding 8 tiles'
+  counts, if they are not themselves mines."
+  [tiles index width]
+  (-> tiles
+      (update-relative-tile index width -1 -1 increment-tile)   ;; up left
+      (update-relative-tile index width  0 -1 increment-tile)   ;; up
+      (update-relative-tile index width  1 -1 increment-tile)   ;; up right
+      (update-relative-tile index width -1  0 increment-tile)   ;; left
+      (update-relative-tile index width  1  0 increment-tile)   ;; right
+      (update-relative-tile index width -1  1 increment-tile)   ;; down left
+      (update-relative-tile index width  0  1 increment-tile)   ;; down
+      (update-relative-tile index width  1  1 increment-tile))) ;; down right
+
 (defn assign-numbers
   "Increment each tile's number by surrounding mines"
-  [tiles]
-  tiles)
+  [tiles width height]
+  (let [tile-count (count tiles)]
+    (loop [tiles tiles
+           index 0]
+      (if (>= index tile-count)
+        tiles
+        (let [tile (set (get tiles index))]
+          (if (contains? tile "mine")
+            (recur (increment-surrounding tiles index width)
+                   (inc index))
+            (recur tiles
+                   (inc index))))))))
 
 (defn generate-tiles
   "Create a starting minefield for the given parameters"
-  [mine-count tile-count]
-  (let [blank-tiles (vec (repeat tile-count blank-tile))]
+  [mine-count width height]
+  (let [blank-tiles (vec (repeat (* width height) blank-tile))]
     (-> blank-tiles
         (place-mines mine-count)
-        assign-numbers)))
+        (assign-numbers width height))))
 
 (defn reset
   "Create a starting minefield with predefined parameters"
@@ -38,15 +133,9 @@
   (let [mine-count 10
         height     8
         width      8]
-    {:tiles  (generate-tiles mine-count (* width height))
+    {:tiles  (generate-tiles mine-count width height)
      :height height
      :width  width}))
-
-(defn add-tag [tile tag]
-  (conj (set tile) tag))
-
-(defn remove-tag [tile tag]
-  (disj (set tile) tag))
 
 (defn game-over [state]
   (println "do game over")
