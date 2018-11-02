@@ -60,16 +60,25 @@
 (defn relative-index
   "Returns the index relative to the given index, offset by dx and dy,
   or :out-of-bounds if the offset not within the range."
-  [index width range dx dy]
+  [index width height dx dy]
   (let [{:keys [x y]} (index->xy index width)
         dest-x (+ x dx)
         dest-y (+ y dy)
         dest-index (xy->index dest-x dest-y width)]
-    (if (and (>= x 0) (< x width) (>= dest-index 0) (< dest-index range))
+    (if (and (>= dest-x 0) (< dest-x width) (>= dest-y 0) (< dest-y height))
       dest-index
       :out-of-bounds)))
 
-(defn increment-tile-number
+(defn update-relative-tile
+  "Applies f to the tile relative to the given position
+  or nil if out of bounds"
+  [tiles index width height dx dy f]
+  (let [dest-index (relative-index index width height dx dy)]
+    (if (= dest-index :out-of-bounds)
+      tiles
+      (update tiles dest-index f))))
+
+(defn increment-tile
   [tile]
   (let [current-number (tile-number tile)
         new-number (increment-number current-number)]
@@ -77,35 +86,22 @@
         (remove-tag current-number)
         (add-tag new-number))))
 
-(defn update-relative-tile
-  "Applies f to the tile relative to the given position
-  or nil if out of bounds"
-  [tiles index width dx dy f]
-  (let [range (count tiles)
-        dest-index (relative-index index width range dx dy)]
-    (if (= dest-index :out-of-bounds)
-      tiles
-      (update tiles dest-index increment-tile-number))))
-
-(defn increment-tile [tile]
-  (println "TILE:" tile))
-
 (defn increment-surrounding
   "Takes an index and increments its surrounding 8 tiles'
   counts, if they are not themselves mines."
-  [tiles index width]
+  [tiles index width height]
   (-> tiles
-      (update-relative-tile index width -1 -1 increment-tile)   ;; up left
-      (update-relative-tile index width  0 -1 increment-tile)   ;; up
-      (update-relative-tile index width  1 -1 increment-tile)   ;; up right
-      (update-relative-tile index width -1  0 increment-tile)   ;; left
-      (update-relative-tile index width  1  0 increment-tile)   ;; right
-      (update-relative-tile index width -1  1 increment-tile)   ;; down left
-      (update-relative-tile index width  0  1 increment-tile)   ;; down
-      (update-relative-tile index width  1  1 increment-tile))) ;; down right
+      (update-relative-tile index width height -1 -1 increment-tile)   ;; up left
+      (update-relative-tile index width height  0 -1 increment-tile)   ;; up
+      (update-relative-tile index width height  1 -1 increment-tile)   ;; up right
+      (update-relative-tile index width height -1  0 increment-tile)   ;; left
+      (update-relative-tile index width height  1  0 increment-tile)   ;; right
+      (update-relative-tile index width height -1  1 increment-tile)   ;; down left
+      (update-relative-tile index width height  0  1 increment-tile)   ;; down
+      (update-relative-tile index width height  1  1 increment-tile))) ;; down right
 
 (defn assign-numbers
-  "Increment each tile's number by surrounding mines"
+  "Increment the tiles that are surrounding miles"
   [tiles width height]
   (let [tile-count (count tiles)]
     (loop [tiles tiles
@@ -114,7 +110,7 @@
         tiles
         (let [tile (set (get tiles index))]
           (if (contains? tile "mine")
-            (recur (increment-surrounding tiles index width)
+            (recur (increment-surrounding tiles index width height)
                    (inc index))
             (recur tiles
                    (inc index))))))))
