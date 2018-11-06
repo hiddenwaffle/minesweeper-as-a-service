@@ -130,9 +130,26 @@
      :height height
      :width  width}))
 
+(defn reveal-mines
+  "Remove any hidden tags and flags from mines"
+  [tiles]
+  (loop [tiles tiles
+         index 0]
+    (let [tile (get tiles index)]
+      (if tile
+        (if (contains? (set tile) "mine")
+          (recur (-> tiles
+                     (update index #(remove-tag % "hidden" "flag")))
+                 (inc index))
+          (recur tiles
+                 (inc index)))
+        tiles))))
+
 (defn game-over [state]
   (println "do game over")
-  state)
+  (-> state
+      (assoc "game-over" true)
+      (assoc :tiles (reveal-mines (:tiles state)))))
 
 (defn determine-neighbor-indexes
   [index open closed tiles width height]
@@ -210,6 +227,8 @@
 
 (defn pick [{:keys [pick-grid-index] :as prev-state}
             type]
-  (apply-pick type
-              pick-grid-index
-              prev-state))
+  (if (true? (:game-over prev-state))
+    prev-state
+    (apply-pick type
+                pick-grid-index
+                (dissoc prev-state :pick-grid-index))))
