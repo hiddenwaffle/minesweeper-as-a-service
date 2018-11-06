@@ -23,8 +23,11 @@
 (defn add-tag [tile tag]
   (conj (set tile) tag))
 
-(defn remove-tag [tile tag]
-  (disj (set tile) tag))
+(defn remove-tag
+  ([tile tag]
+   (disj (set tile) tag))
+  ([tile tag1 tag2]
+   (disj (disj (set tile) tag1) tag2)))
 
 (defn random-indexes
   "Generate some random numbers, non-repeating, in a range from 0 to n"
@@ -159,7 +162,7 @@
               (if (contains? tile 0)
                 (recur (update-in state
                                   [:tiles index]
-                                  #(remove-tag % "hidden"))
+                                  #(remove-tag % "hidden" "flag"))
                        (determine-neighbor-indexes index
                                                    open
                                                    closed
@@ -169,7 +172,7 @@
                        (conj closed index))
                 (recur (update-in state
                                   [:tiles index]
-                                  #(remove-tag % "hidden"))
+                                  #(remove-tag % "hidden" "flag"))
                        (rest open)
                        (conj closed index))))))))))
 
