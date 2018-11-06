@@ -3,16 +3,10 @@
 (def blank-tile "" #{"hidden" 0})
 
 (defn increment-number [current]
-  (case current
-    0 1
-    1 2
-    2 3
-    3 4
-    4 5
-    5 6
-    6 7
-    7 8
-    "<error>"))
+  (let [result (+ current 1)]
+    (if (and (>= result 0) (< result 8))
+      result
+      "<error>")))
 
 (defn tile-number [tile]
   (cond (contains? tile 0) 0
@@ -128,7 +122,7 @@
   []
   (let [mine-count 10
         height     8
-        width      8]
+        width      10]
     {:tiles  (generate-tiles mine-count width height)
      :height height
      :width  width}))
@@ -137,9 +131,47 @@
   (println "do game over")
   state)
 
-(defn clear-fill [index state]
-  (println "do clear-fill")
-  state)
+(defn determine-neighbor-indexes
+  [index open closed tiles width height]
+  (let [up-left    (relative-index index width height -1 -1)
+        up         (relative-index index width height  0 -1)
+        up-right   (relative-index index width height  1 -1)
+        left       (relative-index index width height -1  0)
+        right      (relative-index index width height  1  0)
+        down-left  (relative-index index width height -1  1)
+        down       (relative-index index width height  0  1)
+        down-right (relative-index index width height  1  1)]
+    (-> (set [up-left up up-right left right down-left down down-right])
+        (clojure.set/difference closed #{:out-of-bounds})
+        (clojure.set/union open))))
+
+(defn clear-fill [start-index state]
+  (loop [state  state
+         open   #{start-index}
+         closed #{}]
+    (if (empty? open)
+      state
+      (let [index (first open)]
+        (if (contains? closed index)
+          (recur state (rest open) closed)
+          (do
+            (let [tile (set ((:tiles state) index))]
+              (if (contains? tile 0)
+                (recur (update-in state
+                                  [:tiles index]
+                                  #(remove-tag % "hidden"))
+                       (determine-neighbor-indexes index
+                                                   open
+                                                   closed
+                                                   (:tiles state)
+                                                   (:width state)
+                                                   (:height state))
+                       (conj closed index))
+                (recur (update-in state
+                                  [:tiles index]
+                                  #(remove-tag % "hidden"))
+                       (rest open)
+                       (conj closed index))))))))))
 
 (defn clear
   "Attempt to either clear tile successfully, or hit a mine.
@@ -157,18 +189,13 @@
   [index state]
   (let [path-to-tile [:tiles index]
         tile (set (get-in state path-to-tile))]
-    (cond
-      (contains? tile "flag") (update-in state
-                                         path-to-tile
-                                         #(-> %
-                                              (remove-tag "flag")
-                                              (add-tag "hidden")))
-      (contains? tile "hidden") (update-in state
-                                           path-to-tile
-                                           #(-> %
-                                                (remove-tag "hidden")
-                                                (add-tag "flag")))
-      :else state)))
+    (cond (contains? tile "flag") (update-in state
+                                             path-to-tile
+                                             #(remove-tag % "flag"))
+          (contains? tile "hidden") (update-in state
+                                               path-to-tile
+                                               #(add-tag % "flag"))
+          :else state)))
 
 (defn apply-pick
   "Determine and carry out the pick of a tile"
