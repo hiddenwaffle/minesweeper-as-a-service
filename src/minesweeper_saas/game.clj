@@ -148,7 +148,7 @@
 (defn game-over [state]
   (println "do game over")
   (-> state
-      (assoc "game-over" true)
+      (assoc :game-over true)
       (assoc :tiles (reveal-mines (:tiles state)))))
 
 (defn determine-neighbor-indexes
@@ -193,16 +193,32 @@
                        (rest open)
                        (conj closed index))))))))))
 
+(defn check-win
+  "If the only hidden tiles left are also mines, the player has won."
+  [{:keys [tiles] :as state}]
+  (if (not-any? (fn [tile-vector] (let [tile (set tile-vector)]
+                                    (and (contains? tile "hidden")
+                                         (not (contains? tile "mine")))))
+                tiles)
+    (-> state
+        game-over
+        (assoc :win true))
+    state))
+
 (defn clear
   "Attempt to either clear tile successfully, or hit a mine.
   Tile must be a hidden tile"
   [index state]
-  (let [path-to-tile [:tiles index]
-        tile (set (get-in state path-to-tile))]
-    (cond
-      (contains? tile "mine") (game-over state)
-      (contains? tile "hidden") (clear-fill index state)
-      :else state)))
+  (let [new-state
+        (let [path-to-tile [:tiles index]
+              tile (set (get-in state path-to-tile))]
+          (cond
+            (contains? tile "mine") (game-over state)
+            (contains? tile "hidden") (clear-fill index state)
+            :else state))]
+    (if (:game-over new-state)
+      new-state
+      (check-win new-state))))
 
 (defn flag
   "Toggle the flag of a tile. Tile must be a hidden tile."
