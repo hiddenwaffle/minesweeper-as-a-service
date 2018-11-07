@@ -1,4 +1,5 @@
-(ns minesweeper-saas.game)
+(ns minesweeper-saas.game
+  (:require [clojure.set]))
 
 (def blank-tile "" #{"hidden" 0})
 
@@ -146,7 +147,6 @@
         tiles))))
 
 (defn game-over [state]
-  (println "do game over")
   (-> state
       (assoc :game-over true)
       (assoc :tiles (reveal-mines (:tiles state)))))
