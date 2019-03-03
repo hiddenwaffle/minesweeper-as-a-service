@@ -27,8 +27,7 @@
 
 (def app
   (-> app-routes
-      (wrap-cors :access-control-allow-origin [#"https://hiddenwaffle.github.io"
-                                               #"https://unremarkable.app"
+      (wrap-cors :access-control-allow-origin [#"https://unremarkable.app"
                                                #"http://localhost:8000"]
                  :access-control-allow-methods [:get :post])
       (wrap-json-body {:keywords? true})
